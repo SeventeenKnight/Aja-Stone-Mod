@@ -2,5 +2,6 @@
   "item.ajastone.red_stone_of_aja": "Roter Stein von Aja",
   "message.ajastone.need_mask": "Du musst die Steinmaske tragen.",
   "message.ajastone.already": "Du bist bereits vor Sonnenlicht geschuetzt.",
-  "message.ajastone.success": "Der Rote Stein von Aja schuetzt dich fuer immer vor Sonnenlicht."
+  "message.ajastone.success": "Der Rote Stein von Aja schuetzt dich fuer immer vor Sonnenlicht.",
+  "message.ajastone.need_vampire": "Nur Vampire koennen den Stein benutzen."
 }

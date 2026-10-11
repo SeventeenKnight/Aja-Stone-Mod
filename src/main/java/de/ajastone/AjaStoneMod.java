@@ -10,6 +10,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
@@ -31,6 +32,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,6 +53,7 @@ public class AjaStoneMod {
     private static final int CHECK_INTERVAL = 5;           // alle X Ticks Vampir-Status pruefen
     private static final String MASK_NAMESPACE = "jcraft"; // Mod der Steinmaske
     private static final String MASK_NAME_PART = "mask";   // Item-ID der Maske enthaelt dieses Wort
+    private static final boolean DEBUG = true;             // zeigt Statusmeldungen in der Sonne (spaeter auf false setzen)
     // ---------------------
 
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID);
@@ -91,6 +94,10 @@ public class AjaStoneMod {
             if (level.isClientSide) {
                 return InteractionResultHolder.sidedSuccess(stack, true);
             }
+            if (!(player instanceof ServerPlayer serverPlayer) || !isVampire(serverPlayer)) {
+                player.displayClientMessage(Component.translatable("message.ajastone.need_vampire"), true);
+                return InteractionResultHolder.fail(stack);
+            }
             if (player.getPersistentData().getBoolean(FLAG)) {
                 player.displayClientMessage(Component.translatable("message.ajastone.already"), true);
                 return InteractionResultHolder.fail(stack);
@@ -115,19 +122,48 @@ public class AjaStoneMod {
         if (player.tickCount % CHECK_INTERVAL == 0) {
             protectedPlayers.put(id, player.getPersistentData().getBoolean(FLAG) && isVampire(player));
         }
-        if (!Boolean.TRUE.equals(protectedPlayers.get(id))) return;
-
-        if (player.isOnFire() && isInSun(player)) {
-            player.clearFire();
+        if (DEBUG && player.tickCount % 40 == 0 && isInSun(player)) {
+            player.displayClientMessage(Component.literal("[ajastone] flag="
+                    + player.getPersistentData().getBoolean(FLAG)
+                    + " vampire=" + isVampire(player)
+                    + " burning=" + player.isOnFire()), true);
         }
     }
 
-    /** Falls JCraft den Sonnenbrand als normalen Brandschaden macht, wird dieser hier verhindert. */
+    /** Feuer loeschen ganz am Ende des Server-Ticks, nachdem alle anderen Mods fertig sind. */
+    @SubscribeEvent
+    public void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+        var server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return;
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (!Boolean.TRUE.equals(protectedPlayers.get(player.getUUID()))) continue;
+            if (player.isOnFire() && isInSun(player)) {
+                player.clearFire();
+            }
+        }
+    }
+
+    /** Verhindert Sonnenschaden: Brandschaden, Magie/Generic und Schaden anderer Mods ohne Angreifer. */
     @SubscribeEvent
     public void onAttack(LivingAttackEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!Boolean.TRUE.equals(protectedPlayers.get(player.getUUID()))) return;
-        if (event.getSource().is(DamageTypes.ON_FIRE) && isInSun(player)) {
+        if (!isInSun(player)) return;
+
+        DamageSource src = event.getSource();
+        String type = src.typeHolder().unwrapKey()
+                .map(k -> k.location().toString()).orElse(src.getMsgId());
+        if (DEBUG) {
+            player.sendSystemMessage(Component.literal("[ajastone] Schaden in der Sonne: " + type));
+        }
+        if (src.getEntity() != null || src.getDirectEntity() != null) return; // Angriffe von Mobs/Spielern bleiben
+        boolean sunLike = src.is(DamageTypes.ON_FIRE)
+                || src.is(DamageTypes.GENERIC)
+                || src.is(DamageTypes.MAGIC)
+                || src.is(DamageTypes.INDIRECT_MAGIC)
+                || !type.startsWith("minecraft:");
+        if (sunLike) {
             event.setCanceled(true);
         }
     }
