@@ -1,0 +1,26 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="ajastone"
+version="1.0.0"
+displayName="Red Stone of Aja"
+description='''
+Fuegt den Roten Stein von Aja hinzu. Vampire (JCraft: Eyes of Ender), die die
+Steinmaske tragen und den Stein im Inventar haben, verbrennen nicht in der Sonne.
+'''
+
+[[dependencies.ajastone]]
+modId="forge"
+mandatory=true
+versionRange="[47,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.ajastone]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1,1.21)"
+ordering="NONE"
+side="BOTH"
