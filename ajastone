@@ -1,0 +1,43 @@
+name: Build Mod
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: JDK 17 einrichten
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Forge MDK 1.20.1 herunterladen
+        run: |
+          curl -L -o mdk.zip https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.1-47.3.0/forge-1.20.1-47.3.0-mdk.zip
+          mkdir mdk
+          unzip -q mdk.zip -d mdk
+
+      - name: Quellcode einsetzen
+        run: |
+          rm -rf mdk/src/main
+          mkdir -p mdk/src
+          cp -r src/main mdk/src/main
+          sed -i 's/^mod_id=.*/mod_id=ajastone/' mdk/gradle.properties
+
+      - name: Mod bauen
+        working-directory: mdk
+        run: |
+          chmod +x gradlew
+          ./gradlew build --no-daemon
+
+      - name: Jar hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: ajastone-mod
+          path: mdk/build/libs/*.jar
