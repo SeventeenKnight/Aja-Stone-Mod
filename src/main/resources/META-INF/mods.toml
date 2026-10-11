@@ -8,7 +8,7 @@ version="1.0.0"
 displayName="Red Stone of Aja"
 description='''
 Fuegt den Roten Stein von Aja hinzu. Vampire (JCraft: Eyes of Ender), die die
-Steinmaske tragen und den Stein im Inventar haben, verbrennen nicht in der Sonne.
+Steinmaske tragen und per Rechtsklick den Stein benutzen, sind dauerhaft sonnensicher.
 '''
 
 [[dependencies.ajastone]]

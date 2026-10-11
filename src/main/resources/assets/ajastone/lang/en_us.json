@@ -1,1 +1,6 @@
-{ "item.ajastone.red_stone_of_aja": "Red Stone of Aja" }
+{
+  "item.ajastone.red_stone_of_aja": "Red Stone of Aja",
+  "message.ajastone.need_mask": "You must wear the Stone Mask.",
+  "message.ajastone.already": "You are already protected from sunlight.",
+  "message.ajastone.success": "The Red Stone of Aja protects you from sunlight forever."
+}
